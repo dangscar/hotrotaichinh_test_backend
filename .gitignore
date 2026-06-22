@@ -14,3 +14,5 @@ coverage/
 .idea/
 .DS_Store
 Thumbs.db
+templates/
+generated-files/
