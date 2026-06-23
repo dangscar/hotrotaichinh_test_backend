@@ -5,6 +5,7 @@ import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import ImageModule from "docxtemplater-image-module-free";
 import GeneratedFile from "./GeneratedFile.model.js";
+import axios from "axios";
 
 async function convertDocxToPdf(buffer) {
     return new Promise((resolve, reject) => {
@@ -157,34 +158,51 @@ class ConvertFileAndSubmitController {
 
     // Dùng để xem preview file trước khi gửi file lên hệ thống
     async generatePreview(templatePath, data) {
-        const content = fs.readFileSync(templatePath, "binary");
-        const zip = new PizZip(content);
+    let content;
 
-        const imageModule = new ImageModule({
-            centered: false,
-            getImage(tagValue) {
-                return fs.readFileSync(tagValue);
-            },
-            getSize() {
-                return [120, 80];
-            }
+    // Nếu là URL Cloudinary
+    if (templatePath.startsWith("http")) {
+        const response = await axios.get(templatePath, {
+            responseType: "arraybuffer"
         });
 
-        const doc = new Docxtemplater(zip, {
-            paragraphLoop: true,
-            linebreaks: true,
-            modules: [imageModule]
-        });
-
-        doc.render(data);
-
-        const docxBuffer = doc.getZip().generate({
-            type: "nodebuffer",
-            compression: "DEFLATE",
-        });
-
-        return await convertDocxToPdf(docxBuffer);
+        content = response.data;
+    } else {
+        // Nếu là file local
+        content = fs.readFileSync(templatePath, "binary");
     }
+
+    const zip = new PizZip(content);
+
+    const imageModule = new ImageModule({
+        centered: false,
+
+        getImage(tagValue) {
+            if (!tagValue) return Buffer.alloc(0);
+
+            return fs.readFileSync(tagValue);
+        },
+
+        getSize() {
+            return [120, 80];
+        }
+    });
+
+    const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        modules: [imageModule]
+    });
+
+    doc.render(data);
+
+    const docxBuffer = doc.getZip().generate({
+        type: "nodebuffer",
+        compression: "DEFLATE"
+    });
+
+    return await convertDocxToPdf(docxBuffer);
+}
 
     getAll = async (req, res, next) => {
         try {
