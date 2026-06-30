@@ -32,45 +32,47 @@ class LoaiDonController {
                 message: "Vui lòng chọn file Word",
             });
         }
+        console.log(req.file)
+        res.send("Success")
 
-        //Đọc file word từ đường dẫn
-        const content = await readWordFile(req.file.path);
+        // //Đọc file word từ đường dẫn
+        // const content = await readWordFile(req.file.path);
 
-        // Lấy tên file ( bỏ đuôi )
-        const tenDon = path.parse(req.file.originalname).name;
+        // // Lấy tên file ( bỏ đuôi )
+        // const tenDon = path.parse(req.file.originalname).name;
 
-        // tạo thư mục templates nếu chưa có
-        const templateDir = path.join(import.meta.dirname,"../templates");
+        // // tạo thư mục templates nếu chưa có
+        // const templateDir = path.join(import.meta.dirname,"../templates");
 
-        if (!fs.existsSync(templateDir)) {
-            fs.mkdirSync(templateDir, {recursive: true});
-        }
+        // if (!fs.existsSync(templateDir)) {
+        //     fs.mkdirSync(templateDir, {recursive: true});
+        // }
 
-        // đường dẫn file template
-        const templatePath = path.resolve(import.meta.dirname,"../templates", req.file.originalname);
+        // // đường dẫn file template
+        // const templatePath = path.resolve(import.meta.dirname,"../templates", req.file.originalname);
 
-        // copy file sang templates
-        fs.copyFileSync(req.file.path, templatePath);
+        // // copy file sang templates
+        // fs.copyFileSync(req.file.path, templatePath);
 
-        fs.unlink(req.file.path, (err) => {
-        if (err) {
-            console.error(err);
-            }
-        });
+        // fs.unlink(req.file.path, (err) => {
+        // if (err) {
+        //     console.error(err);
+        //     }
+        // });
 
-        const loaiDon = await LoaiDon.create({
-            tenDon,
-            templateFile: templatePath,
-            chiTiet: content.map(item => ({
-                moTa: item,
-                placeHolder: item,
-            })),
-        });
+        // const loaiDon = await LoaiDon.create({
+        //     tenDon,
+        //     templateFile: templatePath,
+        //     chiTiet: content.map(item => ({
+        //         moTa: item,
+        //         placeHolder: item,
+        //     })),
+        // });
 
-        res.json({
-            success: true,
-            data: loaiDon,
-        });
+        // res.json({
+        //     success: true,
+        //     data: loaiDon,
+        // });
 
     } catch (error) {
         res.status(500).json({
@@ -188,36 +190,36 @@ class LoaiDonController {
 }
 
   async delete(req, res) {
-    try {
-        const loaiDon = await LoaiDon.findById(req.params.id);
+    // try {
+    //     const loaiDon = await LoaiDon.findById(req.params.id);
 
-        if (!loaiDon) {
-            return res.status(404).json({
-                success: false,
-                message: "Không tìm thấy loại đơn",
-            });
-        }
+    //     if (!loaiDon) {
+    //         return res.status(404).json({
+    //             success: false,
+    //             message: "Không tìm thấy loại đơn",
+    //         });
+    //     }
 
-        if (
-            loaiDon.templateFile &&
-            fs.existsSync(loaiDon.templateFile)
-        ) {
-            await fs.promises.unlink(loaiDon.templateFile);
-        }
+    //     if (
+    //         loaiDon.templateFile &&
+    //         fs.existsSync(loaiDon.templateFile)
+    //     ) {
+    //         await fs.promises.unlink(loaiDon.templateFile);
+    //     }
 
-        await LoaiDon.findByIdAndDelete(req.params.id);
+    //     await LoaiDon.findByIdAndDelete(req.params.id);
 
-        return res.json({
-            success: true,
-            message: "Xóa loại đơn thành công",
-        });
+    //     return res.json({
+    //         success: true,
+    //         message: "Xóa loại đơn thành công",
+    //     });
 
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
+    // } catch (error) {
+    //     return res.status(500).json({
+    //         success: false,
+    //         message: error.message,
+    //     });
+    // }
   }
 }
 

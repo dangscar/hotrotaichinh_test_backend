@@ -5,7 +5,10 @@ import convertFileAndSubmitController from './convertFileAndSubmit.controller.js
 const router = Router();
 
 // Configure multer for storing uploaded files temporarily
-const upload = multer({ dest: 'uploads/' });
+// const upload = multer({ dest: 'uploads/' });
+const upload = multer({
+    storage: multer.memoryStorage(),
+});
 
 
 router.post("/generate", upload.single('ANH_THE'), convertFileAndSubmitController.generateFile);
