@@ -5,6 +5,7 @@ import config from './config/index.js';
 import routes from './routes/index.js';
 import { errorHandler } from './shared/middlewares/errorHandler.js';
 import { requestLogger } from './shared/middlewares/requestLogger.js';
+import { connectDatabase } from "../src/config/database.js";
 
 const app = express();
 
@@ -21,5 +22,7 @@ app.use(requestLogger);
 app.use('/api/v1', routes);
 
 app.use(errorHandler);
+
+await connectDatabase();
 
 export default app;
