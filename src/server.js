@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createApp } from './app.js';
+import app from './app.js';
 import { connectDatabase } from './config/database.js';
 import config from './config/index.js';
 
@@ -7,7 +7,6 @@ const startServer = async () => {
   try {
     await connectDatabase();
 
-    const app = createApp();
     const PORT = config.port;
 
     app.listen(PORT, () => {

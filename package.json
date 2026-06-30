@@ -17,6 +17,7 @@
   "dependencies": {
     "axios": "^1.18.1",
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
     "docxtemplater": "^3.51.0",
     "docxtemplater-image-module-free": "^1.1.1",
