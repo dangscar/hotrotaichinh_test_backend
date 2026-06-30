@@ -6,18 +6,20 @@ import routes from './routes/index.js';
 import { errorHandler } from './shared/middlewares/errorHandler.js';
 import { requestLogger } from './shared/middlewares/requestLogger.js';
 
-export const createApp = () => {
-  const app = express();
+const app = express();
 
-  app.use(helmet());
-  app.use(cors({ origin: [config.clientUrl, "http://localhost:5174"], credentials: true }));
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true }));
-  app.use(requestLogger);
+app.use(helmet());
+app.use(cors({
+  origin: [config.clientUrl, "http://localhost:5174"],
+  credentials: true
+}));
 
-  app.use('/api/v1', routes);
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger);
 
-  app.use(errorHandler);
+app.use('/api/v1', routes);
 
-  return app;
-};
+app.use(errorHandler);
+
+export default app;
