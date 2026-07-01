@@ -76,7 +76,18 @@ class ConvertFileAndSubmitController {
 
     generateFile = async (req, res, next) => {
         try {
-            res.send("generateFile")
+            const generatedFile = await GeneratedFile.create({
+                tenDon: "Đơn xin cấp lại thẻ sinh viên",
+                tenNguoiGui: "Nguyễn Văn A",
+                duongDanFile: "https://res.cloudinary.com/duss4h6vi/raw/upload/v1782895929/word-templates/don_cap_lai_the_sinh_vien2-1782895933436",
+                trangThai: "cho_duyet",
+            });
+
+            return res.json({
+                success: true,
+                data: generatedFile,
+            });
+
             // const format = req.query.format || "docx";
             // const templateFile = req.body.templateFile;
             // const filePath = req.file?.path;
@@ -100,10 +111,14 @@ class ConvertFileAndSubmitController {
             // return res.status(200).json(result);
 
         } catch (error) {
-            if (req.file?.path) {
-                fs.unlink(req.file.path, () => {});
-            }
-            next(error);
+            return res.status(500).json({
+                success: false,
+                message: err.message,
+            });
+            // if (req.file?.path) {
+            //     fs.unlink(req.file.path, () => { });
+            // }
+            // next(error);
         }
     }
     //Lưu file vào thư mục generated-files và thêm vào database
@@ -130,81 +145,64 @@ class ConvertFileAndSubmitController {
     // }
 
     previewFile = async (req, res, next) => {
-        res.send("preview");
-        // try {
-        //     const templateFile = req.body.templateFile;
-        //     const filePath = req.file?.path;
 
-        //     const data = {
-        //         ...req.body,
-        //         ANH_THE: filePath
-        //     };
+        try {
+            const { url, ...fields } = req.body;
 
-        //     const pdfBuffer = await this.generatePreview(templateFile, data);
+            if (!url) {
+                return res.status(400).json({ message: "Missing template URL" });
+            }
 
-        //     res.setHeader("Content-Type", "application/pdf");
-        //     res.setHeader("Content-Disposition", "inline; filename=preview.pdf");
-        //     res.send(pdfBuffer);
+            // 1. download docx từ URL
+            const response = await axios.get(url, {
+                responseType: "arraybuffer",
+            });
 
-        //     if (filePath) {
-        //         fs.unlink(filePath, () => {});
-        //     }
+            const content = Buffer.from(response.data);
 
-        // } catch (error) {
-        //     if (req.file?.path) {
-        //         fs.unlink(req.file.path, () => {});
-        //     }
-        //     next(error);
-        // }
-    }
+            const zip = new PizZip(content);
 
-    // Dùng để xem preview file trước khi gửi file lên hệ thống
-    async generatePreview(templatePath, data) {
-        res.send("generatePreview");
-        // let content;
+            // 2. image module (giữ nguyên nếu bạn có ảnh)
+            const imageModule = new ImageModule({
+                getImage(tagValue) {
+                    return tagValue;
+                },
 
-        // // Nếu là URL Cloudinary
-        // if (templatePath.startsWith("http")) {
-        //     const response = await axios.get(templatePath, {
-        //         responseType: "arraybuffer"
-        //     });
+                getSize() {
+                    return [120, 90];
+                },
+            });
 
-        //     content = response.data;
-        // } else {
-        //     // Nếu là file local
-        //     content = fs.readFileSync(templatePath, "binary");
-        // }
+            const doc = new Docxtemplater(zip, {
+                modules: [imageModule],
+            });
 
-        // const zip = new PizZip(content);
+            // 3. render dynamic toàn bộ body
+            doc.render({
+                ...fields,
+            });
 
-        // const imageModule = new ImageModule({
-        //     centered: false,
+            // 4. generate file
+            const buffer = doc.getZip().generate({
+                type: "nodebuffer",
+            });
 
-        //     getImage(tagValue) {
-        //         if (!tagValue) return Buffer.alloc(0);
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            );
 
-        //         return fs.readFileSync(tagValue);
-        //     },
-
-        //     getSize() {
-        //         return [120, 80];
-        //     }
-        // });
-
-        // const doc = new Docxtemplater(zip, {
-        //     paragraphLoop: true,
-        //     linebreaks: true,
-        //     modules: [imageModule]
-        // });
-
-        // doc.render(data);
-
-        // const docxBuffer = doc.getZip().generate({
-        //     type: "nodebuffer",
-        //     compression: "DEFLATE"
-        // });
-
-        // return await convertDocxToPdf(docxBuffer);
+            res.setHeader(
+                "Content-Disposition",
+                'inline; filename="output.docx"'
+            );
+            res.send(buffer);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({
+                message: err.message,
+            });
+        }
     }
 
     getAll = async (req, res, next) => {
