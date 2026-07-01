@@ -50,12 +50,14 @@ class LoaiDonController {
         });
       }
 
+      const fileName = req.file.originalname.split(".")[0];
+
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
             resource_type: "raw",
             folder: "word-templates",
-            public_id: req.file.originalname.split(".")[0],
+            public_id: `${fileName}-${Date.now()}`,
           },
           (error, result) => {
             if (error) return reject(error);
@@ -200,38 +202,47 @@ class LoaiDonController {
   }
 
   async delete(req, res) {
-    res.send("delete");
-    // try {
-    //     const loaiDon = await LoaiDon.findById(req.params.id);
+    try {
+      const loaiDon = await LoaiDon.findById(req.params.id);
 
-    //     if (!loaiDon) {
-    //         return res.status(404).json({
-    //             success: false,
-    //             message: "Không tìm thấy loại đơn",
-    //         });
-    //     }
+      if (!loaiDon) {
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy loại đơn",
+        });
+      }
 
-    //     if (
-    //         loaiDon.templateFile &&
-    //         fs.existsSync(loaiDon.templateFile)
-    //     ) {
-    //         await fs.promises.unlink(loaiDon.templateFile);
-    //     }
+      if (loaiDon.templateFile) {
+        const publicId = getPublicId(loaiDon.templateFile);
 
-    //     await LoaiDon.findByIdAndDelete(req.params.id);
+        if (publicId) {
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "raw",
+          });
+        }
+      }
 
-    //     return res.json({
-    //         success: true,
-    //         message: "Xóa loại đơn thành công",
-    //     });
+      await LoaiDon.findByIdAndDelete(req.params.id);
 
-    // } catch (error) {
-    //     return res.status(500).json({
-    //         success: false,
-    //         message: error.message,
-    //     });
-    // }
+      return res.json({
+        success: true,
+        message: "Xóa thành công",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
   }
+
+}
+
+function getPublicId(url) {
+  const regex = /\/upload\/(?:v\d+\/)?(.+?)(?:\.[^/.]+)?$/;
+  const match = url.match(regex);
+
+  return match ? match[1] : null;
 }
 
 export default new LoaiDonController();
