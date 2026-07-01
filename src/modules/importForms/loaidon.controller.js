@@ -5,6 +5,8 @@ import path from "path";
 import mammoth from "mammoth";
 import cloudinary from "../../config/cloudinary.js";
 import axios from "axios";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
 
 // Hàm đọc file word và lấy ra các trường cần điền (chẳng hạn {Ho_Ten}, {MSSV})
 async function readWordFileFromUrl(url) {
@@ -235,6 +237,50 @@ class LoaiDonController {
       });
     }
   }
+
+  previewFile = async (req, res) => {
+    try {
+      const { url } = req.body;
+
+      if (!url) {
+        return res.status(400).json({ message: "Missing template URL" });
+      }
+
+      // 1. download docx từ URL
+      const response = await axios.get(url, {
+        responseType: "arraybuffer",
+      });
+
+      const content = Buffer.from(response.data);
+
+      const zip = new PizZip(content);
+
+      const doc = new Docxtemplater(zip);
+
+      // 4. generate file
+      const buffer = doc.getZip().generate({
+        type: "nodebuffer",
+      });
+
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      );
+
+      res.setHeader(
+        "Content-Disposition",
+        'inline; filename="output.docx"'
+      );
+
+      res.send(buffer);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        message: err.message,
+      });
+    }
+  };
+
 
 }
 

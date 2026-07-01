@@ -14,5 +14,6 @@ router.get("/", loaiDonController.getAll);
 router.get("/:id", loaiDonController.getById);
 router.put("/:id", loaiDonController.update);
 router.delete("/:id", loaiDonController.delete);
+router.post("/preview", loaiDonController.previewFile);
 
 export default router;
