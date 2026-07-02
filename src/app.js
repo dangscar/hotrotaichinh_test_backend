@@ -11,7 +11,7 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: [config.clientUrl, "http://localhost:5174", "https://hotrotaichinh-test-frontend.vercel.app/"],
+  origin: [config.clientUrl, "http://localhost:5174", "https://hotrotaichinh-test-frontend.vercel.app"],
   credentials: true
 }));
 
